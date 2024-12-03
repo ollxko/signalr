@@ -1,5 +1,7 @@
 ﻿using BadNews.Elevation;
+using BadNews.Hubs;
 using BadNews.ModelBuilders.News;
+using BadNews.Repositories.Comments;
 using BadNews.Repositories.News;
 using BadNews.Repositories.Weather;
 using BadNews.Validation;
@@ -31,6 +33,8 @@ namespace BadNews
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddSingleton<INewsRepository, NewsIndexedRepository>();
+            services.AddSingleton<CommentsRepository>();
+            services.AddSignalR();
             services.AddSingleton<INewsModelBuilder, NewsModelBuilder>();
             services.AddSingleton<IValidationAttributeAdapterProvider, StopWordsAttributeAdapterProvider>();
             services.AddSingleton<IWeatherForecastRepository, WeatherForecastRepository>();
@@ -80,11 +84,13 @@ namespace BadNews
                     action = "StatusCode"
                 });
                 endpoints.MapControllerRoute("default", "{controller=News}/{action=Index}/{id?}");
+                endpoints.MapHub<CommentsHub>("/commentsHub");
             });
             app.MapWhen(context => context.Request.IsElevated(), branchApp =>
             {
                 branchApp.UseDirectoryBrowser("/files");
             });
+            
 
             // Остальные запросы — 404 Not Found
         }
